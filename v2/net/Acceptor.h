@@ -1,44 +1,41 @@
-Ôªø#pragma once
+#pragma once
 
+#include <cstdint>
 #include <functional>
 #include <string>
 
 #include "EventLoop.h"
 #include "IEventDispatcher.h"
 
-class Acceptor;
 using AcceptCallback = std::function<void(int clientfd)>;
 
-class Acceptor final : public IEventDispatcher {
+class Acceptor final : public IEventDispatcher{
 public:
-    Acceptor(EventLoop* pEventLoop);
-    ~Acceptor();
+	Acceptor(EventLoop* pEventLoop);
+	~Acceptor();
+	//...∆‰À¸ππ‘Ï
 
-    //...
-
-    void setAcceptCallback(AcceptCallback&& callback) {
-        m_acceptCallback = callback;
-    }
+	void setAcceptCallback(AcceptCallback&& acceptCallback) {
+		m_acceptCallback = acceptCallback;
+	}
 
 public:
-    virtual void onRead() override;
+	virtual void onRead() override;
 
-    bool startListen(const std::string& ip = "", uint16_t port = 8888);
+	bool startListen(const std::string& ip = "", uint16_t port = 8888);
 
 private:
-    virtual void onWrite() override {}
+	virtual void onWrite() override {};
 
-    virtual void onClose() override {}
+	virtual void onClose() override {};
 
-    virtual void enableReadWrite(bool read, bool write) override {}
-
-
+	virtual void enableReadWrite(bool read, bool write) override {};
 
 
 private:
-    int                 m_listenfd;
+	int				m_listenfd { -1 };
 
-    EventLoop* m_pEventLoop;
+	EventLoop*		m_pEventLoop;
 
-    AcceptCallback      m_acceptCallback;
+	AcceptCallback	m_acceptCallback;
 };

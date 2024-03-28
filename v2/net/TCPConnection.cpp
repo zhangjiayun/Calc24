@@ -1,161 +1,170 @@
-ï»¿#include "TCPConnection.h"
+#include "TCPConnection.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
 TCPConnection::TCPConnection(int clientfd, const std::shared_ptr<EventLoop>& spEventLoop)
-    : m_fd(clientfd), m_spEventLoop(spEventLoop) {
+	: m_fd(clientfd), m_spEventLoop(spEventLoop) {
 
 }
 
 TCPConnection::~TCPConnection() {
-    ::close(m_fd);
+	::close(m_fd);
 }
 
 bool TCPConnection::startRead() {
-    m_spEventLoop->registerReadEvent(m_fd, this, true);
-
-    return true;
+	//TODO: registerReadEventÓ¦·µ»Øbool£¬´ýÐÞ¸Ä
+	m_spEventLoop->registerReadEvent(m_fd, true, this);
+	return true;
 }
 
-bool TCPConnection::send(const char* buf, int bufLen) {
-    m_sendBuf.append(buf, bufLen);
+bool TCPConnection::send(const char* buf, int bufLen){
+	m_sendBuf.append(buf, bufLen);
 
-    while (true) {
-        int n = ::send(m_fd, m_sendBuf, m_sendBuf.remaining(), 0);
-        if (n == 0) {
-            //å¯¹ç«¯å…³é—­äº†è¿žæŽ¥
-            //TODO: æˆ‘ä»¬ä¹Ÿå…³é—­è¿žæŽ¥
-            onClose();
-            return false;
-        } else if (n < 0) {
-            if (errno == EINTR) {
-                continue;;
-            } else if (errno == EWOULDBLOCK || errno == EAGAIN) {
-                //å½“å‰ç”±äºŽTCPçª—å£å¤ªå°ï¼Œæ•°æ®å‘ä¸å‡ºåŽ»äº†
-                m_writeCallback();
+	while (true) {
+		int n = ::send(m_fd, m_sendBuf, m_sendBuf.remaining(), 0);
+		if (n == 0) {
+			//¶Ô¶Ë¹Ø±ÕÁËÁ¬½Ó
+			//TODO: ÎÒÃÇÒ²¹Ø±ÕÁ¬½Ó 
+			onClose();
+			return false;
+		}
+		else if (n < 0) {
+			if (errno == EINTR) {
+				continue;
+			}
+			else if (errno == EWOULDBLOCK || errno == EAGAIN) {
+				//µ±Ç°ÓÉÓÚTCP´°¿ÚÌ«Ð¡£¬Êý¾Ý·¢²»³öÈ¥ÁË
+				//×¢²áÐ´ÊÂ¼þ
+				m_writecallback();
 
-                registerWriteEvent();
+				registerWriteEvent();
+				return true;
+			}
 
-                return true;
-            }
+			//ÆäËûÇé¿ö³ö´íÁË£¬¹Ø±ÕÁ¬½Ó
+			onClose();
+			return false;
+		}
 
-            //å…¶ä»–æƒ…å†µå‡ºé”™äº†ï¼Œå…³é—­è¿žæŽ¥
-            onClose();
-            return false;
-        }
+		//·¢ËÍ³É¹¦ÁË
+		m_sendBuf.erase(n);
+		if (m_sendBuf.isEmpty()) {
+			return true;
+		}
+	}
 
-        //å‘é€æˆåŠŸäº†
-        m_sendBuf.erase(n);
-        if (m_sendBuf.isEmpty()) {
-            return true;
-        }
-    }
-
-    //return false;
+	//return false;
 }
 
-
-bool TCPConnection::send(const std::string& buf) {
-    return send(buf.c_str(), buf.length());
+bool TCPConnection::send(const std::string& buf){
+	return send(buf.c_str(), buf.length());
 }
 
-void TCPConnection::onRead() {
-    if (!m_enableRead)
-        return;
+void TCPConnection::onRead(){
+	if (!m_enableRead)
+		return;
 
-    //æ”¶æ•°æ®
-    char buf[1024];
-    int n = ::recv(m_fd, buf, sizeof(buf), 0);
-    if (n == 0) {
-        //å¯¹ç«¯å…³é—­äº†è¿žæŽ¥
-        //æˆ‘ä»¬ä¹Ÿå…³é—­è¿žæŽ¥
-        onClose();
-    } else if (n < 0) {
-        if (errno == EINTR/* || errno == EWOULDBLOCK || errno == EAGAIN*/) {
-            return;
-        }
+	//ÊÕÊý¾Ý
+	char buf[1024];
+	int n = ::recv(m_fd, buf, sizeof(buf), 0);
+	if (n == 0) {
+		//¶Ô¶Ë¹Ø±ÕÁËÁ¬½Ó
+		//ÎÒÃÇÒ²¹Ø±ÕÁ¬½Ó
+		onClose();
+	}else if (n < 0) {
+		if (errno == EINTR /*|| errno == EWOULDBLOCK || errno == EAGAIN*/) {
+			return;
+		}
 
-        //å…¶ä»–æƒ…å†µå‡ºé”™äº†ï¼Œå…³é—­è¿žæŽ¥
-        onClose();
-        return;
-    }
+		//ÆäËûÇé¿ö³ö´íÁË£¬¹Ø±ÕÁ¬½Ó
+		onClose();
+		return;
+	}
 
-    //æ­£å¸¸æ”¶åˆ°æ•°æ®åŒ…
-    m_recvBuf.append(buf, n);
+	//Õý³£ÊÕµ½Êý¾Ý°ü
+	m_recvBuf.append(buf, n);
 
-    //è§£åŒ…
-    //m_readCallback=>Calc24Session::onRead
-    m_readCallback(m_recvBuf);
+	//½â°ü
+	//m_readcallback=>Calc24Session::onRead
+	m_readcallback(m_recvBuf);
 }
 
-void TCPConnection::onWrite() {
-    if (!m_enableWrite)
-        return;
+void TCPConnection::onWrite(){
+	if (!m_enableWrite)
+		return;
 
-    while (true) {
-        int n = ::send(m_fd, m_sendBuf, m_sendBuf.remaining(), 0);
-        if (n == 0) {
-            //å¯¹ç«¯å…³é—­äº†è¿žæŽ¥
-            //TODO: æˆ‘ä»¬ä¹Ÿå…³é—­è¿žæŽ¥
-            return;
-        } else if (n < 0) {
-            if (errno == EINTR) {
-                continue;;
-            } else if (errno == EWOULDBLOCK || errno == EAGAIN) {
-                //å½“å‰ç”±äºŽTCPçª—å£å¤ªå°ï¼Œæ•°æ®å‘ä¸å‡ºåŽ»äº†
-                m_writeCallback();
+	while (true) {
+		int n = ::send(m_fd, m_sendBuf, m_sendBuf.remaining(), 0);
+		if (n == 0) {
+			//¶Ô¶Ë¹Ø±ÕÁËÁ¬½Ó
+			//ÎÒÃÇÒ²¹Ø±ÕÁ¬½Ó
+			onClose();
+			return;
+		}
+		else if (n < 0) {
+			if (errno == EINTR) {
+				continue;
+			}
+			else if (errno == EWOULDBLOCK || errno == EAGAIN) {
+				//µ±Ç°ÓÉÓÚTCP´°¿ÚÌ«Ð¡£¬Êý¾Ý·¢²»³öÈ¥ÁË
+				//×¢²áÐ´ÊÂ¼þ
+				m_writecallback();
 
-                unregisterWriteEvent();
+				registerWriteEvent();
 
-                return;
-            }
+				return;
+			}
 
-            //å…¶ä»–æƒ…å†µå‡ºé”™äº†ï¼Œå…³é—­è¿žæŽ¥
-            return;
-        }
+			//ÆäËûÇé¿ö³ö´íÁË£¬¹Ø±ÕÁ¬½Ó
+			onClose();
+			return;
+		}
 
-        //å‘é€æˆåŠŸäº†
-        m_sendBuf.erase(n);
-        if (m_sendBuf.isEmpty()) {
-            return;
-        }
-    }
+		//·¢ËÍ³É¹¦ÁË
+		m_sendBuf.erase(n);
+		if (m_sendBuf.isEmpty()) {
+			unregisterWriteEvent();
+			return;
+		}
+	}
 }
 
 void TCPConnection::onClose() {
-    m_closeCallback();
+	m_closecallback(); //¸øÓÃ»§»Øµ÷
 
-    unregisterAllEvents();
+	unregisterAllEvents();
+
 }
 
 void TCPConnection::enableReadWrite(bool read, bool write) {
-    m_enableRead = read;
-    m_enableWrite = write;
+	m_enableRead = read;
+	m_enableWrite = write;
 }
 
 void TCPConnection::registerWriteEvent() {
-    if (m_registerWriteEvent)
-        return;
+	if (m_registerWriteEvent)
+		return;
 
-    //å‘IOå¤ç”¨å‡½æ•°æ³¨å†Œå†™äº‹ä»¶
-    m_spEventLoop->registerWriteEvent(m_fd, this, true);
+	//ÏòIO¸´ÓÃº¯Êý×¢²áÐ´ÊÂ¼þ
+	m_spEventLoop->registerWriteEvent(m_fd, true, this);
+	m_registerWriteEvent = true;
 }
 
 void TCPConnection::unregisterWriteEvent() {
-    if (!m_registerWriteEvent)
-        return;
+	if (!m_registerWriteEvent)
+		return;
 
-    //å‘IOå¤ç”¨å‡½æ•°åæ³¨å†Œå†™äº‹ä»¶
-    m_spEventLoop->unregisterWriteEvent(m_fd, this, false);
+	//ÏòIO¸´ÓÃº¯Êý·´×¢²áÐ´ÊÂ¼þ
+	m_spEventLoop->registerWriteEvent(m_fd, false, this);
 
-    m_registerWriteEvent = false;
+	m_registerWriteEvent = false;
 }
 
 void TCPConnection::unregisterAllEvents() {
-    //å‘IOå¤ç”¨å‡½æ•°åæ³¨å†Œæ‰€æœ‰è¯»å†™äº‹ä»¶
-    m_spEventLoop->unregisterAllEvents(m_fd, this);
+	//ÏòIO¸´ÓÃº¯Êý·´×¢²áËùÓÐ¶ÁÐ´ÊÂ¼þ
+	m_spEventLoop->unregisterAllEvents(m_fd, this);
 
-    m_registerWriteEvent = false;
+	m_registerWriteEvent = false;
 }

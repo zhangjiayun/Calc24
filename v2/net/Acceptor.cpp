@@ -1,66 +1,69 @@
-ï»¿#include "Acceptor.h"
+#include "Acceptor.h"
 
 #include <iostream>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <sys/types.h>
+#include <sys/types.h>      
 #include <sys/socket.h>
 #include <unistd.h>
 
 
 Acceptor::Acceptor(EventLoop* pEventLoop) : m_pEventLoop(pEventLoop) {
-
+    
 }
 
 Acceptor::~Acceptor() {
     if (m_listenfd != -1) {
         ::close(m_listenfd);
+        m_listenfd = -1;
     }
 }
 
 void Acceptor::onRead() {
+
     while (true) {
         struct sockaddr clientAddr;
-        socklen_t clientAddrLen = sizeof(clientAddr);
-        //4. æ¥å—å®¢æˆ·ç«¯è¿æ¥
-        int clientfd = ::accept4(m_listenfd, (struct sockaddr*)&clientAddr, &clientAddrLen, SOCK_NONBLOCK);
+        socklen_t clientAddrlen = sizeof(clientAddr);
+        //4. ½ÓÊÜ¿Í»§¶ËÁ¬½Ó
+        int clientfd = ::accept4(m_listenfd, (struct sockaddr*)&clientAddr, &clientAddrlen, SOCK_NONBLOCK);
         if (clientfd > 0) {
-            //æˆåŠŸæ¥æ”¶è¿æ¥
-            //m_acceptCallback=>TCPServer::onAccept
+            //³É¹¦½ÓÊÕÁ¬½Ó
             m_acceptCallback(clientfd);
-        } else if (clientfd == -1) {
+        }
+        else if (clientfd == -1) {
             if (errno == EWOULDBLOCK) {
-                //æ²¡æœ‰è¿æ¥äº†
+                //Ã»ÓĞÁ¬½ÓÁË
                 return;
-            } else {
-                //å‡ºé”™äº†
+            }
+            else {
+                //³ö´íÁË
                 return;
             }
         }
     }
-
 }
 
-bool Acceptor::startListen(const std::string& ip/* = ""*/, uint16_t port/* = 8888*/) {
-    //1.åˆ›å»ºä¸€ä¸ªä¾¦å¬socket
+bool Acceptor::startListen(const std::string& ip /*= ""*/, uint16_t port /*= 8888*/) {
+    //1.´´½¨Ò»¸öÕìÌısocket
     m_listenfd = ::socket(AF_INET, SOCK_STREAM, 0);
     if (m_listenfd == -1)
         return false;
 
     int optval = 1;
-    //TODO: åˆ¤æ–­ä¸€ä¸‹è¿™ä¸¤ä¸ªå‡½æ•°æ˜¯å¦è°ƒç”¨æˆåŠŸ
+    //TODO: ÅĞ¶ÏÒ»ÏÂÕâÁ½¸öº¯ÊıÊÇ·ñµ÷ÓÃ³É¹¦
     ::setsockopt(m_listenfd, SOL_SOCKET, SO_REUSEADDR, &optval, static_cast<socklen_t>(sizeof optval));
     ::setsockopt(m_listenfd, SOL_SOCKET, SO_REUSEPORT, &optval, static_cast<socklen_t>(sizeof optval));
 
-    //2.åˆå§‹åŒ–æœåŠ¡å™¨åœ°å€
+    //2.³õÊ¼»¯·şÎñÆ÷µØÖ·
     struct sockaddr_in bindaddr;
     bindaddr.sin_family = AF_INET;
-    //TODO: å¾…ä¿®å¤
+    //TODO: ´ıĞŞ¸´£¬²»ÄÜÖ±½Ó¸³string
     if (ip == "") {
         bindaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    } else {
-        bindaddr.sin_addr.s_addr = inet_addr(ip.c_str());
+    }
+    else {
+        bindaddr.sin_addr.s_addr = inet_addr(ip.c_str())/*htonl(INADDR_ANY)*/;
     }
     bindaddr.sin_port = htons(port);
     if (::bind(m_listenfd, (struct sockaddr*)&bindaddr, sizeof(bindaddr)) == -1) {
@@ -68,13 +71,13 @@ bool Acceptor::startListen(const std::string& ip/* = ""*/, uint16_t port/* = 888
         return false;
     }
 
-    //3.å¯åŠ¨ä¾¦å¬
+    //3.Æô¶¯ÕìÌı
     if (::listen(m_listenfd, SOMAXCONN) == -1) {
         std::cout << "listen error." << std::endl;
         return false;
     }
 
-    m_pEventLoop->registerReadEvent(m_listenfd, this, true);
+    m_pEventLoop->registerReadEvent(m_listenfd, true, this);
 
     return true;
 }

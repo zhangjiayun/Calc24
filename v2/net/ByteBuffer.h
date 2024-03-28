@@ -1,40 +1,40 @@
-ï»¿/**
- * 2024.03.14 zhangxf
- * è‡ªå®šä¹‰ç¼“å†²åŒºç±»
- */
+/*
+* 2024.03.18 zhangjiayun
+* ×Ô¶¨Òå»º³åÇøÀà
+*/
 #pragma once
 
 #include <string>
 
 class ByteBuffer {
 public:
-    ByteBuffer() = default;
-    ~ByteBuffer() = default;
+	ByteBuffer() = default;
+	~ByteBuffer() = default;
 
-    //TODO: å¾…å®Œæˆ
-    ByteBuffer(const ByteBuffer& rhs);
-    ByteBuffer& operator=(const ByteBuffer& rhs);
+	ByteBuffer(const ByteBuffer& rhs) = default;
+	ByteBuffer& operator=(const ByteBuffer& rhs) = default;
 
-    ByteBuffer(ByteBuffer&& rhs);
-    ByteBuffer& operator=(ByteBuffer&& rhs);
+	ByteBuffer(ByteBuffer&& rhs) = default;
+	ByteBuffer& operator=(ByteBuffer&& rhs) = default;
 
 public:
-    operator const char* ();
+	//TODO: ???
+	operator const char* ();
 
-    void append(const char* buf, int bufLen);
-    void retrieve(std::string& outBuf, size_t bufLen = 0);
-    size_t retrieve(char* buf, size_t bufLen);
+	void append(const char* buf, int bufLen);
+	void retrieve(std::string& outBuf, size_t bufLen = 0);
+	size_t retrieve(char* buf, size_t bufLen);
 
-    size_t peek(char* buf, size_t bufLen);
+	size_t peek(char* buf, size_t bufLen);
 
-    void erase(size_t bufLen = 0);
+	void erase(size_t bufLen = 0);
 
-    size_t  remaining();
+	size_t remaining();
 
-    void clear();
+	void clear();
 
-    bool isEmpty();
+	bool isEmpty();
 
 private:
-    std::string  m_internalBuf;
+	std::string			m_internalBuf;
 };

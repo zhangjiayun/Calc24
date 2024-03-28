@@ -1,29 +1,32 @@
-ï»¿#include "TCPServer.h"
+#include "TCPServer.h"
 
 #include <functional>
+#include <iostream>
+
 
 bool TCPServer::init(int32_t threadNum, const std::string& ip, uint16_t port) {
-    m_threadPool.start(threadNum);
+	m_threadPool.start(threadNum);
 
-    //TODOï¼šå¯¹ipå’Œportåšä¸€äº›å¿…è¦çš„å‚æ•°æ ¡éªŒ
+    //TODO: ¶ÔipºÍport×öÒ»Ð©±ØÒªµÄ²ÎÊýÐ£Ñé
     m_ip = ip;
     m_port = port;
 
     m_baseEventLoop.init();
 
     m_pAcceptor = new Acceptor(&m_baseEventLoop);
+
     if (!m_pAcceptor->startListen(ip, port)) {
         return false;
     }
 
-    //TODO: AcceptCallbackåªæŽ¥æ”¶ä¸€ä¸ªå‚æ•°ï¼Œè¿™é‡Œä¼ äº†ä¸¤ä¸ªï¼Œä¼šæœ‰é—®é¢˜ï¼Ÿ
+    //TODO: AcceptCallbackÖ»½ÓÊÕÒ»¸ö²ÎÊý£¬ÕâÀï´«ÁËÁ½¸ö£¬»áÓÐÎÊÌâÂð£¿ bindµÄÉìËõÐÔ
     m_pAcceptor->setAcceptCallback(std::bind(&TCPServer::onAccept, this, std::placeholders::_1));
 
     return true;
 }
 
 void TCPServer::uninit() {
-    m_threadPool.stop();
+	m_threadPool.stop();  
 }
 
 void TCPServer::start() {
@@ -39,4 +42,3 @@ void TCPServer::onAccept(int clientfd) {
 
     //m_connections[clientfd] = std::move(spTCPConnection);
 }
-

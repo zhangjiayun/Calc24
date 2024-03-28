@@ -1,63 +1,62 @@
-ï»¿#include "EventLoop.h"
+#include "EventLoop.h"
 
-#include <memory>
 #include <vector>
 
 #include "Select.h"
 #include "Poll.h"
 #include "Epoll.h"
 
-bool EventLoop::init(IOMultiplexType type/* = IOMultiplexType::IOMultiplexEpoll*/) {
-    if (type == IOMultiplexType::IOMultiplexTypeSelect) {
-        m_spIOMultiplex = std::make_unique<Select>();
-    } else if (type == IOMultiplexType::IOMultiplexTypePoll) {
-        m_spIOMultiplex = std::make_unique<Poll>();
-    } else {
-        m_spIOMultiplex = std::make_unique<Epoll>();
-    }
+bool EventLoop::init(IOMultiplexType type /*= IOMultiplexType::IOMultiplexTypeEpoll*/) {
+	if (type == IOMultiplexType::IOMultiplexTypeSelect) {
+		m_spIOMultiplex = std::make_unique<Select>();
+	}
+	else if (type == IOMultiplexType::IOMultiplexTypePoll) {
+		m_spIOMultiplex = std::make_unique<Poll>();
+	}
+	else {
+		m_spIOMultiplex = std::make_unique<Epoll>();
+	}
 
-    m_running = true;
+	m_running = true;
 
-    return true;
+	return true;
 }
 
-void EventLoop::run() {
-    std::vector<IEventDispatcher*> eventDispatchers;
-
-    while (m_running) {
-        //1. æ£€æµ‹å’Œå¤„ç†å®šæ—¶å™¨äº‹ä»¶
-        // 
-        //2. ä½¿ç”¨select/poll/epollç­‰IOå¤ç”¨å‡½æ•°æ£€æµ‹ä¸€ç»„socketçš„è¯»å†™äº‹ä»¶
-        // 
-        eventDispatchers.clear();
-        m_spIOMultiplex->poll(500000, eventDispatchers);
-        for (size_t i = 0; i < eventDispatchers.size(); ++i) {
-            eventDispatchers[i]->onRead();
-            eventDispatchers[i]->onWrite();
-        }
-        //3. å¤„ç†è¯»å†™äº‹ä»¶
-        //for ()
-
-        //4. åˆ©ç”¨å”¤é†’fdæœºåˆ¶å¤„ç†è‡ªå®šä¹‰äº‹ä»¶ 
-    }
+void EventLoop::run(){
+	while (m_running) {
+		//1. ¼ì²âºÍ´¦Àí¶¨Ê±Æ÷ÊÂ¼ş
+		//
+		//2. Ê¹ÓÃselect/poll/epollµÈIO¸´ÓÃº¯Êı¼ì²âÒ»×ésocketµÄ¶ÁĞ´ÊÂ¼ş
+		//
+		std::vector<IEventDispatcher*> eventDispatchers;
+		m_spIOMultiplex->poll(500000, eventDispatchers);
+		for (size_t i = 0; i < eventDispatchers.size(); ++i) {
+			eventDispatchers[i]->onRead();
+			eventDispatchers[i]->onWrite();
+		}
+		//3. ´¦Àí¶ÁĞ´ÊÂ¼ş
+		//for (int )
+		//4. ÀûÓÃ»½ĞÑfd»úÖÆ´¦Àí×Ô¶¨ÒåÊÂ¼ş
+	}
 }
 
-void EventLoop::registerReadEvent(int fd, IEventDispatcher* eventDispatcher, bool readEvent) {
-    m_spIOMultiplex->registerReadEvent(fd, eventDispatcher, readEvent);
+void EventLoop::registerReadEvent(int fd, bool readEvent, IEventDispatcher* eventDispatcher) {
+	m_spIOMultiplex->registerReadEvent(fd, true, eventDispatcher);
 }
 
-void EventLoop::registerWriteEvent(int fd, IEventDispatcher* eventDispatcher, bool writeEvent) {
-    m_spIOMultiplex->registerWriteEvent(fd, eventDispatcher, writeEvent);
+void EventLoop::registerWriteEvent(int fd, bool writeEvent, IEventDispatcher* eventDispatcher) {
+	m_spIOMultiplex->registerWriteEvent(fd, true, eventDispatcher);
 }
 
-void EventLoop::unregisterReadEvent(int fd, IEventDispatcher* eventDispatcher, bool readEvent) {
-    m_spIOMultiplex->unregisterReadEvent(fd, eventDispatcher, readEvent);
+void EventLoop::unregisterReadEvent(int fd, bool readEvent, IEventDispatcher* eventDispatcher) {
+	m_spIOMultiplex->unregisterReadEvent(fd, true, eventDispatcher);
 }
 
-void EventLoop::unregisterWriteEvent(int fd, IEventDispatcher* eventDispatcher, bool writeEvent) {
-    m_spIOMultiplex->unregisterWriteEvent(fd, eventDispatcher, writeEvent);
+void EventLoop::unregisterWriteEvent(int fd, bool writeEvent, IEventDispatcher* eventDispatcher) {
+	m_spIOMultiplex->unregisterWriteEvent(fd, true, eventDispatcher);
 }
 
 void EventLoop::unregisterAllEvents(int fd, IEventDispatcher* eventDispatcher) {
-    m_spIOMultiplex->unregisterAllEvents(fd, eventDispatcher);
+	m_spIOMultiplex->unregisterAllEvents(fd, eventDispatcher);
 }
+

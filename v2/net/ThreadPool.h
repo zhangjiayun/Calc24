@@ -1,10 +1,13 @@
-ï»¿/**
- * çº¿ç¨‹æ± ç±»
- * zhangxf 2024.03.14
- */
+/**
+* Ïß³Ì³ØÀà
+*  zhangjiayun 2024.03.18
+*/
 #pragma once
 
-#include <cstdint>
+//#include <stdint.h>
+#include <cstdint> //C++Ð´·¨
+#include <functional>
+#include <memory>
 #include <thread>
 #include <vector>
 
@@ -12,30 +15,29 @@
 
 class ThreadPool final {
 public:
-    ThreadPool() = default;
-    ~ThreadPool() = default;
+	ThreadPool() = default;
+	~ThreadPool() = default;
 
-    void start(int32_t threadNum = 1);
-    void stop();
+	void start(int32_t threadNum = 1);
+	void stop();
 
-    std::shared_ptr<EventLoop> getNextEventLoop();
-
-private:
-    void threadFunc(size_t eventLoopIndex);
+	std::shared_ptr<EventLoop> getNextEventLoop();
 
 private:
-    ThreadPool(const ThreadPool& rhs) = delete;
-    ThreadPool& operator=(ThreadPool& rhs) = delete;
-
-    ThreadPool(ThreadPool&& rhs) = delete;
-    ThreadPool& operator=(ThreadPool&& rhs) = delete;
+	void threadFunc(size_t eventLoopIndex);
 
 
 private:
-    bool m_stop{ false };
-    size_t m_lastEventLoopNo{ 0 };
+	ThreadPool(const ThreadPool& rhs) = delete;
+	ThreadPool& operator= (const ThreadPool& rhs) = delete;
 
-    std::vector<std::shared_ptr<std::thread>>   m_threads;
-    std::vector<std::shared_ptr<EventLoop>>     m_eventLoops;
+	ThreadPool(ThreadPool&& rhs) = delete;
+	ThreadPool& operator= (ThreadPool&& rhs) = delete;
 
+
+private:
+	bool										m_stop{false};
+	size_t										m_lastEventLoopNo{ 0 };
+	std::vector<std::shared_ptr<std::thread> >	m_threads;
+	std::vector<std::shared_ptr<EventLoop> >	m_eventLoops;
 };

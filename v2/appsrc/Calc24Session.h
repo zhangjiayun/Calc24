@@ -1,27 +1,27 @@
-ï»¿#pragma once
+#pragma once
 
-//TODO: å¤´æ–‡ä»¶åŒ…å«æ–¹å¼å¾…ä¿®æ”¹
+//TODO: Í·ÎÄ¼ş°üº¬·½Ê½´ıĞŞ¸Ä TCPConnection.hÊôĞÔ×ÔÖÆµÄ¿âÎÄ¼ş
 #include "TCPConnection.h"
 
 #include "Calc24Protocol.h"
 
-class Calc24Session {
+class Calc24Session final {
 public:
-    Calc24Session(std::shared_ptr<TCPConnection>&& spConn);
-    ~Calc24Session() = default;
+	Calc24Session(std::shared_ptr<TCPConnection>&& spConn);
+	~Calc24Session() = default;
 
-    //TODO: ä¸ºå•¥è¿”å›å€¼æ˜¯boolç±»å‹
-    void onRead(ByteBuffer& recvBuf);
-    void onWrite();
+	void onRead(ByteBuffer& recvBuf);
+	void onWrite();
 
-    void onClose();
+	void onClose();
 
-    //ä¸šåŠ¡ä»£ç 
-    void sendWelcomeMsg();
-
-private:
-    bool decodePackage(ByteBuffer& recvBuf, const MsgHeader& header);
+	//ÒµÎñ´úÂë
+	void sendWelcomeMsg();
 
 private:
-    std::shared_ptr<TCPConnection>      m_spConn;
+	bool decodePackage(ByteBuffer& recvBuf, const MsgHeader& msgHeader);
+
+
+private:
+	std::shared_ptr<TCPConnection>			m_spConn;
 };

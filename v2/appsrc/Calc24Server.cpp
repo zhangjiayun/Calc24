@@ -1,18 +1,20 @@
-Ôªø#include "Calc24Server.h"
+#include "Calc24Server.h"
 
-bool Calc24Server::init(int32_t threadNum, const std::string& ip/* = ""*/, uint16_t port/* = 8888*/) {
-    //m_tcpServer.setConnectedCallback([](std::shared_ptr<TCPConnection>& spConn) -> void {
+
+bool Calc24Server::init(int32_t threadNum, const std::string& ip /*= ""*/, uint16_t port /*= 8888*/) {
+    //lambda±Ì¥Ô Ω–¥∑®£¨µ˜ ‘≤ª∑Ω±„£¨≤ªΩ®“È
+    //m_tcpServer.setConnectedCallback([](std::shared_ptr<TCPConnection>& spConn)->void {
 
     //    });
 
     m_tcpServer.setConnectedCallback(std::bind(&Calc24Server::onConnected, this, std::placeholders::_1));
+    m_tcpServer.setDisconnectedCallback(std::bind(&Calc24Server::onDisconnected, this, std::placeholders::_1));
 
     if (!m_tcpServer.init(5, ip, port)) {
         return false;
     }
 
     m_tcpServer.start();
-
     return true;
 }
 
@@ -28,5 +30,4 @@ void Calc24Server::onConnected(std::shared_ptr<TCPConnection>& spConn) {
 }
 
 void Calc24Server::onDisconnected(std::shared_ptr<TCPConnection>& spConn) {
-
 }

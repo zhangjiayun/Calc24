@@ -1,4 +1,4 @@
-ï»¿#pragma once
+#pragma once
 
 #include <functional>
 #include <memory>
@@ -7,62 +7,63 @@
 #include "IEventDispatcher.h"
 #include "EventLoop.h"
 
-//ReadCallbackå¦‚æœè¿”å›falseï¼Œè¡¨ç¤ºä¸Šå±‚ä¸šåŠ¡é€»è¾‘è®¤ä¸ºå¤„ç†å‡ºé”™ï¼Œå¸Œæœ›å…³é—­è¿æ¥
-using ReadCallback = std::function<void(ByteBuffer&)>;
-using WriteCallback = std::function<void()>;
+//ReadCallbackÈç¹û·µ»Øfalse, ±íÊ¾ÉÏ²ãÒµÎñÂß¼­ÈÏÎª´¦Àí³ö´í£¬Ï£Íû¹Ø±ÕÁ¬½Ó
+using ReadCallback = std::function<void (ByteBuffer&)>;
+using WriteCallback = std::function<void()>; //¸øÓÃ»§¸ö»ú»áÀ´»Øµ÷
 using CloseCallback = std::function<void()>;
 
 
 class TCPConnection : public IEventDispatcher {
 public:
-    TCPConnection(int clientfd, const std::shared_ptr<EventLoop>& spEventLoop);
-    virtual ~TCPConnection();
+	TCPConnection(int clientfd, const std::shared_ptr<EventLoop>& spEventLoop);
+	virtual ~TCPConnection();
 
-    bool startRead();
+	bool startRead();
 
-    //TODO: copy ctor...
+	//TODO: copy ctor...
 
-    void setReadCallback(ReadCallback&& readCallback) {
-        m_readCallback = std::move(readCallback);
-    }
+	void setReadCallback(ReadCallback&& readCallback) {
+		m_readcallback = std::move(readCallback);
+	}
 
-    void setWriteCallback(WriteCallback&& writeCallback) {
-        m_writeCallback = std::move(writeCallback);
-    }
+	void setWriteCallback(WriteCallback&& writeCallback) {
+		m_writecallback = std::move(writeCallback);
+	}
 
-    void setCloseCallback(CloseCallback&& closeCallback) {
-        m_closeCallback = std::move(closeCallback);
-    }
+	void setCloseCallback(CloseCallback&& closeCallback) {
+		m_closecallback = std::move(closeCallback);
+	}
 
-    bool send(const char* buf, int bufLen);
-    bool send(const std::string& buf);
+	bool send(const char* buf, int bufLen);
+	bool send(const std::string& buf);
 
-    virtual void onRead() override;
-    virtual void onWrite() override;
+	virtual void onRead() override;
+	virtual void onWrite() override;
 
-    virtual void onClose() override;
+	virtual void onClose() override;
 
-    virtual void enableReadWrite(bool read, bool write) override;
-
-private:
-    void registerWriteEvent();
-    void unregisterWriteEvent();
-
-    void unregisterAllEvents();
+	virtual void enableReadWrite(bool read, bool write) override;
 
 private:
-    int                         m_fd;
-    bool                        m_registerWriteEvent{ false };
-    bool                        m_enableRead{ false };
-    bool                        m_enableWrite{ false };
+	void registerWriteEvent();
+	void unregisterWriteEvent();
 
-    ByteBuffer                  m_recvBuf;
-    ByteBuffer                  m_sendBuf;
+	void unregisterAllEvents();
 
-    ReadCallback                m_readCallback;
-    WriteCallback               m_writeCallback;
-    CloseCallback               m_closeCallback;
+private:
+	int							m_fd;
+	//ÕìÌısocketfdÔõÃ´Çø·Ö
+	bool						m_registerWriteEvent{ false };
+	bool						m_enableRead{ false };
+	bool						m_enableWrite{ false };
 
-    std::shared_ptr<EventLoop>  m_spEventLoop;
+	ByteBuffer					m_recvBuf;
+	ByteBuffer					m_sendBuf;
+
+	ReadCallback				m_readcallback;
+	WriteCallback				m_writecallback;
+	CloseCallback				m_closecallback;
+
+	std::shared_ptr<EventLoop>	m_spEventLoop;
 
 };
